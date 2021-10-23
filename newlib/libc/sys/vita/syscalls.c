@@ -398,3 +398,51 @@ _stat_r(struct _reent *reent, const char *path, struct stat *st)
 	reent->_errno = 0;
 	return 0;
 }
+
+_ssize_t
+_pread_r(struct _reent *reent, int __fd, void *__buf, size_t __nbytes, off_t __offset)
+{
+	int ret;
+	DescriptorTranslation *fdmap = __vita_fd_grab(__fd);
+
+	if (!fdmap) {
+		reent->_errno = EBADF;
+		return -1;
+	}
+
+	ret = sceIoPread(fdmap->sce_uid, __buf, __nbytes, __offset);
+
+	__vita_fd_drop(fdmap);
+
+	if (ret < 0) {
+		reent->_errno = ret & SCE_ERRNO_MASK;
+		return -1;
+	}
+
+	reent->_errno = 0;
+	return ret;
+}
+
+_ssize_t
+_pwrite_r(int __fd, const void *__buf, size_t __nbytes, off_t __offset)
+{
+	int ret;
+	DescriptorTranslation *fdmap = __vita_fd_grab(__fd);
+
+	if (!fdmap) {
+		reent->_errno = EBADF;
+		return -1;
+	}
+
+	ret = sceIoPwrite(fdmap->sce_uid, __buf, __nbytes, __offset);
+
+	__vita_fd_drop(fdmap);
+
+	if (ret < 0) {
+		reent->_errno = ret & SCE_ERRNO_MASK;
+		return -1;
+	}
+
+	reent->_errno = 0;
+	return ret;
+}
